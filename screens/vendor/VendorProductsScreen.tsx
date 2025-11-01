@@ -69,7 +69,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ user, onNav
                                             {product.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex space-x-2">
                                             <button onClick={() => onEditProduct(product)} className="text-emerald-600 hover:underline text-xs">Edit</button>
                                             <button onClick={() => onDeleteProduct(product)} className="text-red-600 hover:underline text-xs">Delete</button>

@@ -130,6 +130,12 @@ const NavButton: React.FC<{
     </button>
 );
 
+const CloseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onNavigate, onLogout, children, activeView, notifications }) => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -154,12 +160,23 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onNavigate, onL
 
   return (
     <div className="flex h-screen bg-slate-100">
+      {/* Overlay for mobile nav */}
+      {mobileNavOpen && (
+        <div 
+            className="fixed inset-0 bg-black/50 z-20 md:hidden"
+            onClick={() => setMobileNavOpen(false)}
+            aria-hidden="true"
+        ></div>
+      )}
       {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 transform ${mobileNavOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 transition-transform duration-200 ease-in-out w-64 bg-white border-r border-slate-200 flex flex-col z-30`}>
-        <div className="flex items-center justify-center p-6 border-b border-slate-200">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200">
           <button onClick={() => onNavigate(AppView.HOME)}>
             <BrandApeLogo className="h-6 w-auto text-black" />
           </button>
+           <button onClick={() => setMobileNavOpen(false)} className="md:hidden text-slate-500 hover:text-slate-800" aria-label="Close navigation menu">
+                <CloseIcon className="w-6 h-6" />
+           </button>
         </div>
         <nav className="mt-4 px-4 flex-grow">
             {navConfig.dashboard && (
@@ -206,12 +223,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onNavigate, onL
         {/* Header */}
         <header className="flex justify-between items-center p-4 bg-white border-b border-slate-200">
           <div className="flex items-center">
-            <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-slate-500 focus:outline-none md:hidden">
+            <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-slate-500 focus:outline-none md:hidden" aria-label="Open navigation menu">
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 6H20M4 12H20M4 18H11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
-            <h1 className="text-xl font-semibold text-slate-800 ml-2">
+            <h1 className="text-xl font-semibold text-slate-800 ml-2 md:ml-0">
               Welcome, {user.name.split(' ')[0]}!
             </h1>
           </div>
@@ -246,7 +263,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onNavigate, onL
                         <p className="text-sm font-medium text-slate-800">{user.name}</p>
                         <p className="text-xs text-slate-500">{user.email}</p>
                     </div>
-                    <ChevronDownIcon className="w-4 h-4 text-slate-500 ml-1 hidden sm:block" />
+                    <ChevronDownIcon className="w-4 h-4 text-slate-500 ml-1" />
                 </button>
                  {profileOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded shadow-lg py-1 z-20" onMouseLeave={() => setProfileOpen(false)}>
@@ -268,7 +285,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onNavigate, onL
         {isActionableUser && showKycBanner && <KycBanner user={user} onNavigate={onNavigate} onClose={() => setShowKycBanner(false)} />}
 
         {/* Page content */}
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 p-4 sm:p-6">
           {children}
         </main>
       </div>

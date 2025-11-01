@@ -82,7 +82,7 @@ const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({ user, onNavigate, o
                                             {u.kycStatus}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex space-x-4">
                                             <button onClick={() => onEditUser(u)} className="text-emerald-600 hover:underline text-xs">Edit</button>
                                             {(u.kycStatus === 'Pending' || u.kycStatus === 'Rejected') && (

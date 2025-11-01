@@ -62,7 +62,7 @@ const AdminOrdersScreen: React.FC<AdminOrdersScreenProps> = ({ user, onNavigate,
                                             {order.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 whitespace-nowrap">
                                         <button onClick={() => onViewOrder(order)} className="text-emerald-600 hover:underline text-xs">View Details</button>
                                     </td>
                                 </tr>

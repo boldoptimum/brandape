@@ -59,11 +59,11 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children, onNavigate, isLog
     <div className="bg-slate-50">
       <header className="border-b bg-white">
         <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center py-2 text-xs text-gray-600">
+            <div className="flex flex-col sm:flex-row justify-between items-center py-2 text-xs text-slate-600 space-y-1 sm:space-y-0">
                 <div className="flex items-center space-x-4">
                     <span>📞 +234 808 7655 765</span>
                 </div>
-                <div>Get 50% off on selected items</div>
+                <div className="hidden sm:block">Get 50% off on selected items</div>
                 <div className="flex items-center space-x-4">
                     {isLoggedIn ? (
                         <button onClick={onLogout} className="font-medium hover:text-emerald-600">Logout</button>
@@ -81,7 +81,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children, onNavigate, isLog
             <button onClick={() => onNavigate(AppView.HOME)}>
                 <BrandApeLogo className="h-6 w-auto text-black" />
             </button>
-            <div className="flex-1 max-w-xl mx-8">
+            <div className="flex-1 max-w-xl mx-4 sm:mx-8">
                 <form onSubmit={handleSearchSubmit} className="relative">
                     <input 
                         type="text" 
@@ -94,14 +94,14 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children, onNavigate, isLog
                     </button>
                 </form>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-4 md:space-x-6">
                 <button onClick={handleAccountClick} className="flex items-center space-x-2 text-gray-700">
                    <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                    <span>{isLoggedIn ? "Account" : "Login"}</span>
+                    <span className="hidden sm:inline">{isLoggedIn ? "Account" : "Login"}</span>
                 </button>
                 <button onClick={handleCartClick} className="relative flex items-center space-x-2 text-gray-700">
                     <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.823-6.837a.5.5 0 00-.476-.665H5.402M4.5 7.5h15M7.5 14.25a3 3 0 000 6h12" /></svg>
-                    <span>Cart</span>
+                    <span className="hidden sm:inline">Cart</span>
                     {cartCount > 0 && 
                         <span className="absolute -top-2 -right-2 w-5 h-5 text-xs bg-emerald-600 text-white rounded-full flex items-center justify-center">{cartCount}</span>
                     }

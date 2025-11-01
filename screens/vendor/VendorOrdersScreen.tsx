@@ -64,7 +64,7 @@ const VendorOrdersScreen: React.FC<VendorOrdersScreenProps> = ({ user, onNavigat
                                             {order.status}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="flex space-x-2">
                                             <button onClick={() => onViewOrder(order)} className="text-emerald-600 hover:underline text-xs">View</button>
                                         </div>

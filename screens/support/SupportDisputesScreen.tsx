@@ -64,7 +64,7 @@ const SupportDisputesScreen: React.FC<SupportDisputesScreenProps> = ({ user, onN
                                             {dispute.status}
                                         </span>
                                     </td>
-                                     <td className="px-6 py-4">
+                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <button onClick={() => onViewDispute(dispute)} className="font-medium text-emerald-600 hover:underline">View Case</button>
                                     </td>
                                 </tr>

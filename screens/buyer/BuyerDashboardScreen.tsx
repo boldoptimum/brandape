@@ -73,7 +73,7 @@ const BuyerDashboardScreen: React.FC<BuyerDashboardScreenProps> = ({ user, onNav
                                             {order.status}
                                         </span>
                                     </td>
-                                     <td className="px-6 py-4">
+                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <button onClick={() => onViewOrder(order)} className="font-medium text-emerald-600 hover:underline">View Details</button>
                                     </td>
                                 </tr>
