@@ -3,7 +3,7 @@
 import { AppView } from './types';
 
 export const viewToPath: Record<AppView, string> = {
-    [AppView.HOME]: '/',
+    [AppView.HOME]: '',
     [AppView.PRODUCT_DETAIL]: 'product/view',
     [AppView.JOIN]: 'join',
     [AppView.REGISTER_VENDOR]: 'register/vendor',
