@@ -1,8 +1,9 @@
 
 
-import React from 'react';
+import React, { useState } from 'react';
 import { AppView, User, UserType } from '../../types';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
+import TrashIcon from '../../components/icons/TrashIcon';
 
 interface AdminUsersScreenProps {
   user: User;
@@ -10,6 +11,7 @@ interface AdminUsersScreenProps {
   onLogout: () => void;
   users: User[];
   onDeactivateUser: (user: User) => void;
+  onBulkDeactivateUsers: (users: User[]) => void;
   onViewKyc: (user: User) => void;
   onEditUser: (user: User) => void;
   notifications: any[];
@@ -44,8 +46,35 @@ const getKycStatusClass = (status: User['kycStatus']) => {
     }
 };
 
-const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({ user, onNavigate, onLogout, users, onDeactivateUser, onViewKyc, onEditUser, notifications }) => {
+const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({ user, onNavigate, onLogout, users, onDeactivateUser, onBulkDeactivateUsers, onViewKyc, onEditUser, notifications }) => {
+    const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
     
+    const availableUsers = users.filter(u => u.id !== user.id);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedUserIds(availableUsers.map(u => u.id));
+        } else {
+            setSelectedUserIds([]);
+        }
+    };
+
+    const handleSelectOne = (userId: string) => {
+        if (selectedUserIds.includes(userId)) {
+            setSelectedUserIds(selectedUserIds.filter(id => id !== userId));
+        } else {
+            setSelectedUserIds([...selectedUserIds, userId]);
+        }
+    };
+
+    const handleBulkDeactivateClick = () => {
+        const usersToDeactivate = users.filter(u => selectedUserIds.includes(u.id));
+        if (usersToDeactivate.length > 0) {
+            onBulkDeactivateUsers(usersToDeactivate);
+            setSelectedUserIds([]);
+        }
+    };
+
     return (
         <DashboardLayout user={user} onNavigate={onNavigate} onLogout={onLogout} activeView={AppView.ADMIN_USERS} notifications={notifications}>
             <div className="flex justify-between items-center mb-6">
@@ -55,11 +84,34 @@ const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({ user, onNavigate, o
                     Add User
                 </button>
             </div>
+             {selectedUserIds.length > 0 && (
+                <div className="mb-4">
+                    <button 
+                        onClick={handleBulkDeactivateClick} 
+                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium flex items-center"
+                    >
+                        <TrashIcon className="w-4 h-4 mr-2" />
+                        Deactivate Selected ({selectedUserIds.length})
+                    </button>
+                </div>
+            )}
             <div className="bg-white shadow rounded overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left text-slate-500">
                         <thead className="text-xs text-slate-700 uppercase bg-slate-50">
                             <tr>
+                                <th scope="col" className="p-4">
+                                    <div className="flex items-center">
+                                        <input 
+                                            id="checkbox-all-users" 
+                                            type="checkbox" 
+                                            onChange={handleSelectAll} 
+                                            checked={availableUsers.length > 0 && selectedUserIds.length === availableUsers.length}
+                                            className="w-4 h-4 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500"
+                                        />
+                                        <label htmlFor="checkbox-all-users" className="sr-only">checkbox</label>
+                                    </div>
+                                </th>
                                 <th scope="col" className="px-6 py-3">Name</th>
                                 <th scope="col" className="px-6 py-3">Email</th>
                                 <th scope="col" className="px-6 py-3">User Type</th>
@@ -70,7 +122,21 @@ const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({ user, onNavigate, o
                         <tbody>
                             {users.map(u => (
                                 <tr key={u.id} className="bg-white border-b border-slate-200 hover:bg-slate-50">
-                                    <td className="px-6 py-4 font-medium text-slate-900">{u.name}</td>
+                                    <td className="w-4 p-4">
+                                        {u.id !== user.id && (
+                                            <div className="flex items-center">
+                                                <input 
+                                                    id={`checkbox-user-${u.id}`} 
+                                                    type="checkbox" 
+                                                    onChange={() => handleSelectOne(u.id)}
+                                                    checked={selectedUserIds.includes(u.id)}
+                                                    className="w-4 h-4 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500"
+                                                />
+                                                <label htmlFor={`checkbox-user-${u.id}`} className="sr-only">checkbox</label>
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 font-medium text-slate-900">{u.name} {u.id === user.id && '(You)'}</td>
                                     <td className="px-6 py-4">{u.email}</td>
                                     <td className="px-6 py-4">
                                         <span className={`px-2 py-1 text-xs font-medium rounded-full ${getUserTypeClass(u.type)}`}>

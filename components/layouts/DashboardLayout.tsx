@@ -97,6 +97,7 @@ const adminNavLinks = {
   groups: [
     { group: 'Management', links: [
         { view: AppView.ADMIN_USERS, label: 'Users', icon: CustomersIcon },
+        { view: AppView.ADMIN_PRODUCTS, label: 'Products', icon: ProductsIcon },
         { view: AppView.ADMIN_ORDERS, label: 'Orders', icon: OrdersIcon },
         { view: AppView.ADMIN_CATEGORIES, label: 'Categories', icon: CategoryIcon },
     ]},

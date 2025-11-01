@@ -48,6 +48,7 @@ import AdminEditUserScreen from './screens/admin/AdminEditUserScreen';
 import AdminKycSettingsScreen from './screens/admin/AdminKycSettingsScreen';
 import AdminContentScreen from './screens/admin/AdminContentScreen';
 import AdminProductsScreen from './screens/admin/AdminProductsScreen';
+import GlobalSpinner from './components/shared/GlobalSpinner';
 
 
 import { mockDisputes, mockOrders, mockProducts, mockUsers as initialUsers, mockNotifications, mockTransactions, mockCategories } from './data/mockData';
@@ -73,6 +74,7 @@ const App: React.FC = () => {
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [orders, setOrders] = useState<Order[]>(mockOrders);
@@ -118,8 +120,8 @@ const App: React.FC = () => {
 
   // Modals and toasts
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [userToDeactivate, setUserToDeactivate] = useState<User | null>(null);
+  const [productsToDelete, setProductsToDelete] = useState<Product[]>([]);
+  const [usersToDeactivate, setUsersToDeactivate] = useState<User[]>([]);
   const [showKycModal, setShowKycModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
@@ -170,26 +172,30 @@ const App: React.FC = () => {
 
 
   const handleLogin = (user: User) => {
-    const foundUser = users.find(u => u.id === user.id);
-    setCurrentUser(foundUser || user);
-    setIsLoggedIn(true);
-    setCart([]);
-    switch (foundUser?.type) {
-      case UserType.VENDOR:
-        navigateTo(AppView.VENDOR_DASHBOARD);
-        break;
-      case UserType.BUYER:
-        navigateTo(AppView.BUYER_DASHBOARD);
-        break;
-      case UserType.SUPPORT_AGENT:
-        navigateTo(AppView.SUPPORT_DASHBOARD);
-        break;
-      case UserType.SUPER_ADMIN:
-        navigateTo(AppView.ADMIN_DASHBOARD);
-        break;
-      default:
-        navigateTo(AppView.HOME);
-    }
+    setIsLoading(true);
+    setTimeout(() => {
+      const foundUser = users.find(u => u.id === user.id);
+      setCurrentUser(foundUser || user);
+      setIsLoggedIn(true);
+      setCart([]);
+      switch (foundUser?.type) {
+        case UserType.VENDOR:
+          navigateTo(AppView.VENDOR_DASHBOARD);
+          break;
+        case UserType.BUYER:
+          navigateTo(AppView.BUYER_DASHBOARD);
+          break;
+        case UserType.SUPPORT_AGENT:
+          navigateTo(AppView.SUPPORT_DASHBOARD);
+          break;
+        case UserType.SUPER_ADMIN:
+          navigateTo(AppView.ADMIN_DASHBOARD);
+          break;
+        default:
+          navigateTo(AppView.HOME);
+      }
+      setIsLoading(false);
+    }, 1000);
   };
 
   const handleLogout = () => {
@@ -200,8 +206,12 @@ const App: React.FC = () => {
   };
 
   const handleRegister = (email: string, userType: UserType, password?: string) => {
-    setRegistrationDetails({ email, userType, password: password || '' });
-    navigateTo(AppView.VERIFY_EMAIL);
+    setIsLoading(true);
+    setTimeout(() => {
+      setRegistrationDetails({ email, userType, password: password || '' });
+      navigateTo(AppView.VERIFY_EMAIL);
+      setIsLoading(false);
+    }, 500);
   };
 
   const handleVerificationSuccess = () => {
@@ -213,17 +223,21 @@ const App: React.FC = () => {
   };
 
   const handleProfileCompletion = (name: string) => {
-    const newUser: User = { 
-        id: `usr_${Date.now()}`, name, email: registrationDetails.email, type: registrationDetails.userType, password: registrationDetails.password,
-        avatarUrl: Images.users.newUser,
-        address: { street: '', city: '', country: ''},
-        phone: '', registeredDate: new Date().toISOString().split('T')[0],
-        lastLogin: new Date().toISOString(), status: 'Active',
-        kycStatus: 'Not Submitted'
-    };
-    setUsers([...users, newUser]);
-    showToast('Registration successful! Welcome.', 'success');
-    handleLogin(newUser);
+    setIsLoading(true);
+    setTimeout(() => {
+      const newUser: User = { 
+          id: `usr_${Date.now()}`, name, email: registrationDetails.email, type: registrationDetails.userType, password: registrationDetails.password,
+          avatarUrl: Images.users.newUser,
+          address: { street: '', city: '', country: ''},
+          phone: '', registeredDate: new Date().toISOString().split('T')[0],
+          lastLogin: new Date().toISOString(), status: 'Active',
+          kycStatus: 'Not Submitted'
+      };
+      setUsers([...users, newUser]);
+      showToast('Registration successful! Welcome.', 'success');
+      handleLogin(newUser);
+      setIsLoading(false);
+    }, 1000);
   }
   
   const handleSelectProduct = (product: Product) => {
@@ -232,62 +246,87 @@ const App: React.FC = () => {
   }
   
   const handleForgotPasswordRequest = (email: string) => {
-    const userExists = users.some(u => u.email === email);
-    if (userExists) {
-        setEmailForPasswordReset(email);
-        showToast('Password reset instructions sent!', 'success');
-        navigateTo(AppView.SET_NEW_PASSWORD);
-    } else {
-        showToast('No account found with that email.', 'error');
-    }
+    setIsLoading(true);
+    setTimeout(() => {
+      const userExists = users.some(u => u.email === email);
+      if (userExists) {
+          setEmailForPasswordReset(email);
+          showToast('Password reset instructions sent!', 'success');
+          navigateTo(AppView.SET_NEW_PASSWORD);
+      } else {
+          showToast('No account found with that email.', 'error');
+      }
+      setIsLoading(false);
+    }, 1000);
   };
 
   const handleSetNewPassword = (password: string) => {
-    if (!emailForPasswordReset) {
-        showToast('Something went wrong. Please try again.', 'error');
-        navigateTo(AppView.FORGOT_PASSWORD);
-        return;
-    }
-    setUsers(users.map(u => u.email === emailForPasswordReset ? { ...u, password } : u));
-    setEmailForPasswordReset(null);
-    showToast('Password updated successfully. Please log in.', 'success');
-    navigateTo(AppView.LOGIN);
+    setIsLoading(true);
+    setTimeout(() => {
+      if (!emailForPasswordReset) {
+          showToast('Something went wrong. Please try again.', 'error');
+          navigateTo(AppView.FORGOT_PASSWORD);
+          setIsLoading(false);
+          return;
+      }
+      setUsers(users.map(u => u.email === emailForPasswordReset ? { ...u, password } : u));
+      setEmailForPasswordReset(null);
+      showToast('Password updated successfully. Please log in.', 'success');
+      navigateTo(AppView.LOGIN);
+      setIsLoading(false);
+    }, 1000);
   };
 
   // User Settings Update
   const handleUpdateProfile = (name: string, phone: string) => {
       if (!currentUser) return;
-      const updatedUser = { ...currentUser, name, phone };
-      setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
-      setCurrentUser(updatedUser);
-      showToast('Profile updated successfully.');
+      setIsLoading(true);
+      setTimeout(() => {
+        const updatedUser = { ...currentUser, name, phone };
+        setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
+        setCurrentUser(updatedUser);
+        showToast('Profile updated successfully.');
+        setIsLoading(false);
+      }, 700);
   };
 
   const handleUpdatePassword = (password: string) => {
       if (!currentUser) return;
-      const updatedUser = { ...currentUser, password };
-      setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
-      setCurrentUser(updatedUser);
-      showToast('Password updated successfully.');
+      setIsLoading(true);
+      setTimeout(() => {
+        const updatedUser = { ...currentUser, password };
+        setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
+        setCurrentUser(updatedUser);
+        showToast('Password updated successfully.');
+        setIsLoading(false);
+      }, 700);
   };
 
   const handleUpdateAddress = (address: User['address']) => {
       if (!currentUser) return;
-      const updatedUser = { ...currentUser, address };
-      setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
-      setCurrentUser(updatedUser);
-      showToast('Address updated successfully.');
+      setIsLoading(true);
+      setTimeout(() => {
+        const updatedUser = { ...currentUser, address };
+        setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
+        setCurrentUser(updatedUser);
+        showToast('Address updated successfully.');
+        setIsLoading(false);
+      }, 700);
   };
 
 
   // KYC Management
   const handleKycSubmit = () => {
       if (!currentUser) return;
-      const updatedUser = { ...currentUser, kycStatus: 'Pending' as const };
-      setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
-      setCurrentUser(updatedUser);
-      showToast('KYC documents submitted for review.');
-      navigateTo(AppView.SETTINGS);
+      setIsLoading(true);
+      setTimeout(() => {
+        const updatedUser = { ...currentUser, kycStatus: 'Pending' as const };
+        setUsers(users.map(u => u.id === currentUser.id ? updatedUser : u));
+        setCurrentUser(updatedUser);
+        showToast('KYC documents submitted for review.');
+        navigateTo(AppView.SETTINGS);
+        setIsLoading(false);
+      }, 1500);
   };
   
   const handleViewKyc = (userToView: User) => {
@@ -296,57 +335,85 @@ const App: React.FC = () => {
   };
   
   const handleUpdateKyc = (userId: string, status: 'Verified' | 'Rejected', reason = '') => {
-      setUsers(users.map(u => u.id === userId ? { ...u, kycStatus: status, kycRejectionReason: reason } : u));
-      showToast(`KYC status for user ${userId} updated to ${status}.`);
-      navigateTo(AppView.ADMIN_KYC_SUBMISSIONS);
+      setIsLoading(true);
+      setTimeout(() => {
+        setUsers(users.map(u => u.id === userId ? { ...u, kycStatus: status, kycRejectionReason: reason } : u));
+        showToast(`KYC status for user ${userId} updated to ${status}.`);
+        navigateTo(AppView.ADMIN_KYC_SUBMISSIONS);
+        setIsLoading(false);
+      }, 1000);
   };
 
   const handleUpdateKycFields = (newFields: KycField[]) => {
-      setKycFields(newFields);
-      showToast('KYC requirements updated.');
+      setIsLoading(true);
+      setTimeout(() => {
+        setKycFields(newFields);
+        showToast('KYC requirements updated.');
+        setIsLoading(false);
+      }, 500);
   };
 
   // User Management (Admin)
   const handleDeactivateUserRequest = (user: User) => {
-    setUserToDeactivate(user);
+    setUsersToDeactivate([user]);
   }
-  const handleConfirmDeactivateUser = () => {
-    if (!userToDeactivate) return;
-    setUsers(users.filter(u => u.id !== userToDeactivate.id));
-    setUserToDeactivate(null);
-    showToast('User has been deactivated.', 'success');
+  const handleBulkDeactivateUsersRequest = (users: User[]) => {
+    setUsersToDeactivate(users);
+  };
+  const handleConfirmDeactivateUsers = () => {
+    if (usersToDeactivate.length === 0) return;
+    setIsLoading(true);
+    setTimeout(() => {
+        const idsToDeactivate = usersToDeactivate.map(u => u.id);
+        setUsers(prevUsers => prevUsers.filter(u => !idsToDeactivate.includes(u.id)));
+        setUsersToDeactivate([]);
+        showToast(`${idsToDeactivate.length} user(s) have been deactivated.`, 'success');
+        setIsLoading(false);
+    }, 1000);
   }
   const handleCreateUser = (newUser: Omit<User, 'id' | 'avatarUrl' | 'address' | 'phone' | 'registeredDate' | 'lastLogin' | 'status' | 'kycStatus'>) => {
-      const user: User = {
-          ...newUser,
-          id: `usr_${Date.now()}`,
-          avatarUrl: Images.users.newUser,
-          address: { street: '', city: '', country: ''},
-          phone: '',
-          registeredDate: new Date().toISOString().split('T')[0],
-          lastLogin: new Date().toISOString(),
-          status: 'Active',
-          kycStatus: 'Not Submitted',
-      };
-      setUsers(prev => [...prev, user]);
-      showToast(`User ${user.name} created successfully.`);
-      navigateTo(AppView.ADMIN_USERS);
+      setIsLoading(true);
+      setTimeout(() => {
+        const user: User = {
+            ...newUser,
+            id: `usr_${Date.now()}`,
+            avatarUrl: Images.users.newUser,
+            address: { street: '', city: '', country: ''},
+            phone: '',
+            registeredDate: new Date().toISOString().split('T')[0],
+            lastLogin: new Date().toISOString(),
+            status: 'Active',
+            kycStatus: 'Not Submitted',
+        };
+        setUsers(prev => [...prev, user]);
+        showToast(`User ${user.name} created successfully.`);
+        navigateTo(AppView.ADMIN_USERS);
+        setIsLoading(false);
+      }, 800);
   };
   const handleNavigateToEditUser = (user: User) => {
     setEditingUser(user);
     navigateTo(AppView.ADMIN_EDIT_USER);
   };
   const handleUpdateUser = (updatedUser: User) => {
-    setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
-    setEditingUser(null);
-    showToast('User details updated successfully.');
-    navigateTo(AppView.ADMIN_USERS);
+    setIsLoading(true);
+    setTimeout(() => {
+      setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
+      setEditingUser(null);
+      showToast('User details updated successfully.');
+      navigateTo(AppView.ADMIN_USERS);
+      setIsLoading(false);
+    }, 800);
   };
 
   // Content Management (Admin)
   const handleUpdateHomepageContent = (content: HomepageContent) => {
-      setHomepageContent(content);
-      showToast('Homepage content updated.');
+      setIsLoading(true);
+      setTimeout(() => {
+        setHomepageContent(content);
+        showToast('Homepage content updated.');
+        setIsLoading(false);
+      }, 1200);
   }
 
 
@@ -366,36 +433,49 @@ const App: React.FC = () => {
   };
 
   const handleSaveProduct = (productData: Omit<Product, 'id' | 'sales' | 'vendorId' | 'rating' | 'reviewCount' | 'reviews'>) => {
-    if (editingProduct) {
-      setProducts(products.map(p => 
-        p.id === editingProduct.id ? { ...editingProduct, ...productData } : p
-      ));
-      showToast('Product updated successfully.');
-    } else {
-      const newProduct: Product = {
-        ...productData,
-        id: `PROD${Date.now()}`,
-        sales: 0,
-        vendorId: currentUser!.id,
-        rating: 0,
-        reviewCount: 0,
-        reviews: [],
-      };
-      setProducts([newProduct, ...products]);
-      showToast('Product added successfully.');
-    }
-    navigateTo(AppView.VENDOR_PRODUCTS);
+    setIsLoading(true);
+    setTimeout(() => {
+      if (editingProduct) {
+        setProducts(products.map(p => 
+          p.id === editingProduct.id ? { ...editingProduct, ...productData } : p
+        ));
+        showToast('Product updated successfully.');
+      } else {
+        const newProduct: Product = {
+          ...productData,
+          id: `PROD${Date.now()}`,
+          sales: 0,
+          vendorId: currentUser!.id,
+          rating: 0,
+          reviewCount: 0,
+          reviews: [],
+        };
+        setProducts([newProduct, ...products]);
+        showToast('Product added successfully.');
+      }
+      navigateTo(AppView.VENDOR_PRODUCTS);
+      setIsLoading(false);
+    }, 1000);
   };
   
   const handleDeleteProductRequest = (product: Product) => {
-    setProductToDelete(product);
+    setProductsToDelete([product]);
   }
+  
+  const handleBulkDeleteProductsRequest = (products: Product[]) => {
+      setProductsToDelete(products);
+  };
 
-  const handleConfirmDeleteProduct = () => {
-    if (!productToDelete) return;
-    setProducts(products.filter(p => p.id !== productToDelete.id));
-    setProductToDelete(null);
-    showToast('Product has been deleted.', 'success');
+  const handleConfirmDeleteProducts = () => {
+    if (productsToDelete.length === 0) return;
+    setIsLoading(true);
+    setTimeout(() => {
+        const idsToDelete = productsToDelete.map(p => p.id);
+        setProducts(prevProducts => prevProducts.filter(p => !idsToDelete.includes(p.id)));
+        setProductsToDelete([]);
+        showToast(`${idsToDelete.length} product(s) have been deleted.`, 'success');
+        setIsLoading(false);
+    }, 1000);
   }
   
   // Dispute Management
@@ -405,46 +485,57 @@ const App: React.FC = () => {
   };
 
   const handleAddDisputeMessage = (disputeId: string, message: { user: string; text: string; timestamp: string; }) => {
-    setDisputes(disputes.map(d => 
-        d.id === disputeId ? { ...d, messages: [...d.messages, message] } : d
-    ));
-    if (selectedDispute?.id === disputeId) {
-        setSelectedDispute(prev => prev ? ({ ...prev, messages: [...prev.messages, message] }) : null);
-    }
+    setIsLoading(true);
+    setTimeout(() => {
+      setDisputes(disputes.map(d => 
+          d.id === disputeId ? { ...d, messages: [...d.messages, message] } : d
+      ));
+      if (selectedDispute?.id === disputeId) {
+          setSelectedDispute(prev => prev ? ({ ...prev, messages: [...prev.messages, message] }) : null);
+      }
+      setIsLoading(false);
+    }, 500);
   };
 
   const handleUpdateDisputeStatus = (disputeId: string, status: string, resolutionAction?: { type: 'refund', amount?: number } | { type: 'release' }) => {
-    setDisputes(disputes.map(d => (d.id === disputeId ? { ...d, status } : d)));
-     if (selectedDispute?.id === disputeId) {
-        setSelectedDispute(prev => prev ? ({...prev, status}) : null);
-    }
-    showToast(`Dispute #${disputeId} status updated to ${status}.`);
-    
-    if (resolutionAction) {
-        const dispute = disputes.find(d => d.id === disputeId);
-        if(!dispute) return;
-        
-        if (resolutionAction.type === 'release') {
-            handleConfirmDelivery(dispute.orderId, true);
-            showToast(`Funds for order #${dispute.orderId} released to vendor.`);
-        } else if (resolutionAction.type === 'refund') {
-            const order = orders.find(o => o.id === dispute.orderId);
-            if(order) {
-              const refundAmount = resolutionAction.amount ?? order.total;
-              setOrders(orders.map(o => o.id === dispute.orderId ? {...o, status: 'Refunded'} : o));
-              const newTransaction: Transaction = {
-                id: `trn_${Date.now()}`,
-                date: new Date().toISOString().split('T')[0],
-                type: 'Refund',
-                amount: -refundAmount,
-                status: 'Completed',
-                description: `Refund for order #${order.id}`
-              };
-              setTransactions(prev => [newTransaction, ...prev]);
-              showToast(`Order #${dispute.orderId} has been refunded for N${refundAmount.toLocaleString()}.`);
-            }
-        }
-    }
+    setIsLoading(true);
+    setTimeout(() => {
+      setDisputes(disputes.map(d => (d.id === disputeId ? { ...d, status } : d)));
+      if (selectedDispute?.id === disputeId) {
+          setSelectedDispute(prev => prev ? ({...prev, status}) : null);
+      }
+      showToast(`Dispute #${disputeId} status updated to ${status}.`);
+      
+      if (resolutionAction) {
+          const dispute = disputes.find(d => d.id === disputeId);
+          if(!dispute) {
+            setIsLoading(false);
+            return;
+          }
+          
+          if (resolutionAction.type === 'release') {
+              handleConfirmDelivery(dispute.orderId, true);
+              showToast(`Funds for order #${dispute.orderId} released to vendor.`);
+          } else if (resolutionAction.type === 'refund') {
+              const order = orders.find(o => o.id === dispute.orderId);
+              if(order) {
+                const refundAmount = resolutionAction.amount ?? order.total;
+                setOrders(orders.map(o => o.id === dispute.orderId ? {...o, status: 'Refunded'} : o));
+                const newTransaction: Transaction = {
+                  id: `trn_${Date.now()}`,
+                  date: new Date().toISOString().split('T')[0],
+                  type: 'Refund',
+                  amount: -refundAmount,
+                  status: 'Completed',
+                  description: `Refund for order #${order.id}`
+                };
+                setTransactions(prev => [newTransaction, ...prev]);
+                showToast(`Order #${dispute.orderId} has been refunded for N${refundAmount.toLocaleString()}.`);
+              }
+          }
+      }
+      setIsLoading(false);
+    }, 1000);
   };
   
   // Order Management
@@ -460,92 +551,110 @@ const App: React.FC = () => {
   };
   
   const handleUpdateOrderStatus = (orderId: string, status: OrderStatus) => {
-    const updatedOrders = orders.map(o => {
-        if (o.id === orderId) {
-            const newHistory = [...o.trackingHistory, { status, date: new Date().toISOString(), location: 'Vendor Hub' }];
-            return {...o, status, trackingHistory: newHistory};
-        }
-        return o;
-    });
-    setOrders(updatedOrders);
+    setIsLoading(true);
+    setTimeout(() => {
+      const updatedOrders = orders.map(o => {
+          if (o.id === orderId) {
+              const newHistory = [...o.trackingHistory, { status, date: new Date().toISOString(), location: 'Vendor Hub' }];
+              return {...o, status, trackingHistory: newHistory};
+          }
+          return o;
+      });
+      setOrders(updatedOrders);
 
-    if (selectedOrder?.id === orderId) {
-        const updatedOrder = updatedOrders.find(o => o.id === orderId);
-        setSelectedOrder(updatedOrder || null);
-    }
-    showToast(`Order #${orderId} status updated to ${status}.`);
+      if (selectedOrder?.id === orderId) {
+          const updatedOrder = updatedOrders.find(o => o.id === orderId);
+          setSelectedOrder(updatedOrder || null);
+      }
+      showToast(`Order #${orderId} status updated to ${status}.`);
+      setIsLoading(false);
+    }, 800);
   };
   
   const handleCreateDispute = (orderId: string, reason: string) => {
       if (!currentUser) return;
-      const order = orders.find(o => o.id === orderId);
-      if (!order) return;
+      setIsLoading(true);
+      setTimeout(() => {
+        const order = orders.find(o => o.id === orderId);
+        if (!order) {
+          setIsLoading(false);
+          return;
+        }
 
-      const newDispute: Dispute = {
-          id: `DISP${Date.now()}`,
-          orderId,
-          buyer: currentUser.name,
-          vendor: "Vendor Inc.",
-          reason,
-          status: 'Open',
-          date: new Date().toISOString().split('T')[0],
-          messages: [{
-              user: currentUser.name,
-              text: `Dispute opened. Reason: ${reason}`,
-              timestamp: new Date().toLocaleString()
-          }]
-      };
-      setDisputes([newDispute, ...disputes]);
-      handleUpdateOrderStatus(orderId, 'Disputed');
-      showToast('Dispute has been created. A support agent will review your case.', 'success');
-      navigateTo(AppView.BUYER_DASHBOARD);
+        const newDispute: Dispute = {
+            id: `DISP${Date.now()}`,
+            orderId,
+            buyer: currentUser.name,
+            vendor: "Vendor Inc.",
+            reason,
+            status: 'Open',
+            date: new Date().toISOString().split('T')[0],
+            messages: [{
+                user: currentUser.name,
+                text: `Dispute opened. Reason: ${reason}`,
+                timestamp: new Date().toLocaleString()
+            }]
+        };
+        setDisputes([newDispute, ...disputes]);
+        handleUpdateOrderStatus(orderId, 'Disputed');
+        showToast('Dispute has been created. A support agent will review your case.', 'success');
+        navigateTo(AppView.BUYER_DASHBOARD);
+        setIsLoading(false);
+      }, 1000);
   };
   
   const handleConfirmDelivery = (orderId: string, forceComplete = false) => {
-    let orderToUpdate = orders.find(o => o.id === orderId);
-    if (!orderToUpdate) return;
-    
-    let updatedOrders = orders.map(o => 
-        o.id === orderId 
-        ? {...o, status: 'Delivered' as const, trackingHistory: [...o.trackingHistory, {status: 'Delivered' as const, date: new Date().toISOString(), location: 'Customer Address'}]} 
-        : o
-    );
-    setOrders(updatedOrders);
-    
-    const recentlyUpdatedOrder = updatedOrders.find(o => o.id === orderId);
-    if (selectedOrder?.id === orderId) {
-        setSelectedOrder(recentlyUpdatedOrder || null);
-    }
-    showToast('Delivery confirmed. Thank you!', 'success');
-    
+    setIsLoading(true);
     setTimeout(() => {
-        // Use the updatedOrders from the closure to avoid stale state
-        const finalOrders = updatedOrders.map(o => {
-            if (o.id === orderId) {
-                const newHistory = [...o.trackingHistory, {status: 'Completed' as const, date: new Date().toISOString()}];
-                return {...o, status: 'Completed' as const, trackingHistory: newHistory };
-            }
-            return o;
-        });
-        setOrders(finalOrders);
+      let orderToUpdate = orders.find(o => o.id === orderId);
+      if (!orderToUpdate) {
+        setIsLoading(false);
+        return;
+      }
+      
+      let updatedOrders = orders.map(o => 
+          o.id === orderId 
+          ? {...o, status: 'Delivered' as const, trackingHistory: [...o.trackingHistory, {status: 'Delivered' as const, date: new Date().toISOString(), location: 'Customer Address'}]} 
+          : o
+      );
+      setOrders(updatedOrders);
+      
+      const recentlyUpdatedOrder = updatedOrders.find(o => o.id === orderId);
+      if (selectedOrder?.id === orderId) {
+          setSelectedOrder(recentlyUpdatedOrder || null);
+      }
+      showToast('Delivery confirmed. Thank you!', 'success');
+      
+      setTimeout(() => {
+          // Use the updatedOrders from the closure to avoid stale state
+          const finalOrders = updatedOrders.map(o => {
+              if (o.id === orderId) {
+                  const newHistory = [...o.trackingHistory, {status: 'Completed' as const, date: new Date().toISOString()}];
+                  return {...o, status: 'Completed' as const, trackingHistory: newHistory };
+              }
+              return o;
+          });
+          setOrders(finalOrders);
 
-        const finalOrder = finalOrders.find(o => o.id === orderId);
-        if (selectedOrder?.id === orderId) {
-            setSelectedOrder(finalOrder || null);
-        }
-        
-        if (finalOrder?.usedEscrow) {
-            const newTransaction: Transaction = {
-                id: `trn_${Date.now()}`,
-                date: new Date().toISOString().split('T')[0],
-                type: 'Escrow Release',
-                amount: finalOrder.total,
-                status: 'Completed',
-                description: `Payment for order #${finalOrder.id}`
-            };
-            setTransactions(prev => [newTransaction, ...prev]);
-        }
-    }, forceComplete ? 0 : 2000);
+          const finalOrder = finalOrders.find(o => o.id === orderId);
+          if (selectedOrder?.id === orderId) {
+              setSelectedOrder(finalOrder || null);
+          }
+          
+          if (finalOrder?.usedEscrow) {
+              const newTransaction: Transaction = {
+                  id: `trn_${Date.now()}`,
+                  date: new Date().toISOString().split('T')[0],
+                  type: 'Escrow Release',
+                  amount: finalOrder.total,
+                  status: 'Completed',
+                  description: `Payment for order #${finalOrder.id}`
+              };
+              setTransactions(prev => [newTransaction, ...prev]);
+          }
+      }, forceComplete ? 0 : 2000);
+      setIsLoading(false);
+    }, 1000);
   };
 
 
@@ -581,25 +690,29 @@ const App: React.FC = () => {
           setShowKycModal(true);
           return;
       }
-      const newOrder: Order = {
-          id: `ORD${Date.now()}`,
-          date: new Date().toISOString().split('T')[0],
-          customer: currentUser.name,
-          customerId: currentUser.id,
-          total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + 5000,
-          status: useEscrow ? 'Payment in Escrow' : 'Pending',
-          items: cart,
-          shippingAddress: currentUser.address,
-          paymentMethod: 'Card **** 1234',
-          usedEscrow: useEscrow,
-          trackingHistory: [
-              { status: 'Order Placed', date: new Date().toISOString(), location: 'Online Store' },
-              { status: useEscrow ? 'Payment in Escrow' : 'Pending', date: new Date().toISOString() }
-          ]
-      };
-      setOrders([newOrder, ...orders]);
-      setCart([]);
-      showToast('Order placed successfully!', 'success');
+      setIsLoading(true);
+      setTimeout(() => {
+        const newOrder: Order = {
+            id: `ORD${Date.now()}`,
+            date: new Date().toISOString().split('T')[0],
+            customer: currentUser.name,
+            customerId: currentUser.id,
+            total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0) + 5000,
+            status: useEscrow ? 'Payment in Escrow' : 'Pending',
+            items: cart,
+            shippingAddress: currentUser.address,
+            paymentMethod: 'Card **** 1234',
+            usedEscrow: useEscrow,
+            trackingHistory: [
+                { status: 'Order Placed', date: new Date().toISOString(), location: 'Online Store' },
+                { status: useEscrow ? 'Payment in Escrow' : 'Pending', date: new Date().toISOString() }
+            ]
+        };
+        setOrders([newOrder, ...orders]);
+        setCart([]);
+        showToast('Order placed successfully!', 'success');
+        setIsLoading(false);
+      }, 1500);
   };
 
   // Vendor Wallet
@@ -609,31 +722,46 @@ const App: React.FC = () => {
         setShowKycModal(true);
         return;
     }
-    const newTransaction: Transaction = {
-      id: `trn_${Date.now()}`,
-      date: new Date().toISOString().split('T')[0],
-      type: 'Payout',
-      amount: -amount,
-      status: 'Pending',
-      description: 'Withdrawal to bank account'
-    };
-    setTransactions([newTransaction, ...transactions]);
-    showToast(`Payout request for N${amount.toLocaleString()} submitted.`);
+    setIsLoading(true);
+    setTimeout(() => {
+      const newTransaction: Transaction = {
+        id: `trn_${Date.now()}`,
+        date: new Date().toISOString().split('T')[0],
+        type: 'Payout',
+        amount: -amount,
+        status: 'Pending',
+        description: 'Withdrawal to bank account'
+      };
+      setTransactions([newTransaction, ...transactions]);
+      showToast(`Payout request for N${amount.toLocaleString()} submitted.`);
+      setIsLoading(false);
+    }, 1200);
   };
 
   // Category Management (Admin)
   const handleAddCategory = (name: string) => {
-      const newCategory: Category = { id: `cat_${Date.now()}`, name, subcategories: [] };
-      setCategories(prev => [...prev, newCategory]);
-      showToast('Category added successfully.');
+      setIsLoading(true);
+      setTimeout(() => {
+        const newCategory: Category = { id: `cat_${Date.now()}`, name, subcategories: [] };
+        setCategories(prev => [...prev, newCategory]);
+        showToast('Category added successfully.');
+        setIsLoading(false);
+      }, 500);
   };
   const handleUpdateCategory = (id: string, newName: string) => {
-      const oldName = categories.find(c => c.id === id)?.name;
-      if (oldName === newName) return;
-      
-      setCategories(categories.map(c => c.id === id ? { ...c, name: newName } : c));
-      setProducts(products.map(p => p.category === oldName ? { ...p, category: newName } : p));
-      showToast('Category updated successfully.');
+      setIsLoading(true);
+      setTimeout(() => {
+        const oldName = categories.find(c => c.id === id)?.name;
+        if (oldName === newName) {
+            setIsLoading(false);
+            return;
+        };
+        
+        setCategories(categories.map(c => c.id === id ? { ...c, name: newName } : c));
+        setProducts(products.map(p => p.category === oldName ? { ...p, category: newName } : p));
+        showToast('Category updated successfully.');
+        setIsLoading(false);
+      }, 500);
   };
   const handleDeleteCategoryRequest = (category: Category) => {
       const isUsed = products.some(p => p.category === category.name);
@@ -645,27 +773,39 @@ const App: React.FC = () => {
   };
    const handleConfirmDeleteCategory = () => {
     if (!categoryToDelete) return;
-    setCategories(categories.filter(c => c.id !== categoryToDelete.id));
-    setCategoryToDelete(null);
-    showToast('Category has been deleted.', 'success');
+    setIsLoading(true);
+    setTimeout(() => {
+      setCategories(categories.filter(c => c.id !== categoryToDelete.id));
+      setCategoryToDelete(null);
+      showToast('Category has been deleted.', 'success');
+      setIsLoading(false);
+    }, 800);
   };
 
   const handleAddSubCategory = (categoryId: string, subCategoryName: string) => {
-    setCategories(categories.map(c => 
-      c.id === categoryId 
-        ? { ...c, subcategories: [...(c.subcategories || []), subCategoryName] }
-        : c
-    ));
-    showToast('Sub-category added.');
+    setIsLoading(true);
+    setTimeout(() => {
+      setCategories(categories.map(c => 
+        c.id === categoryId 
+          ? { ...c, subcategories: [...(c.subcategories || []), subCategoryName] }
+          : c
+      ));
+      showToast('Sub-category added.');
+      setIsLoading(false);
+    }, 400);
   };
 
   const handleDeleteSubCategory = (categoryId: string, subCategoryName: string) => {
-    setCategories(categories.map(c => 
-      c.id === categoryId 
-        ? { ...c, subcategories: (c.subcategories || []).filter(s => s !== subCategoryName) }
-        : c
-    ));
-    showToast('Sub-category removed.');
+    setIsLoading(true);
+    setTimeout(() => {
+      setCategories(categories.map(c => 
+        c.id === categoryId 
+          ? { ...c, subcategories: (c.subcategories || []).filter(s => s !== subCategoryName) }
+          : c
+      ));
+      showToast('Sub-category removed.');
+      setIsLoading(false);
+    }, 400);
   };
 
 
@@ -757,10 +897,10 @@ const App: React.FC = () => {
         return <AdminCategoriesScreen user={currentUser} onNavigate={navigateTo} onLogout={handleLogout} categories={categories} onAddCategory={handleAddCategory} onUpdateCategory={handleUpdateCategory} onDeleteCategory={handleDeleteCategoryRequest} onAddSubCategory={handleAddSubCategory} onDeleteSubCategory={handleDeleteSubCategory} notifications={notifications.filter(n=>n.userId === currentUser.id)} />;
       case AppView.ADMIN_PRODUCTS:
         if (!currentUser || currentUser.type !== UserType.SUPER_ADMIN) return <LoginScreen onNavigate={navigateTo} onLogin={handleLogin} onNavigateHome={() => navigateTo(AppView.HOME)} />;
-        return <AdminProductsScreen user={currentUser} onNavigate={navigateTo} onLogout={handleLogout} products={products} onEditProduct={() => showToast('Admin product editing is not available.', 'error')} onDeleteProduct={handleDeleteProductRequest} notifications={notifications.filter(n=>n.userId === currentUser.id)} />;
+        return <AdminProductsScreen user={currentUser} onNavigate={navigateTo} onLogout={handleLogout} products={products} onEditProduct={() => showToast('Admin product editing is not available.', 'error')} onDeleteProduct={handleDeleteProductRequest} onBulkDeleteProducts={handleBulkDeleteProductsRequest} notifications={notifications.filter(n=>n.userId === currentUser.id)} />;
       case AppView.ADMIN_USERS:
         if (!currentUser || currentUser.type !== UserType.SUPER_ADMIN) return <LoginScreen onNavigate={navigateTo} onLogin={handleLogin} onNavigateHome={() => navigateTo(AppView.HOME)} />;
-        return <AdminUsersScreen user={currentUser} onNavigate={navigateTo} onLogout={handleLogout} users={users} onDeactivateUser={handleDeactivateUserRequest} onViewKyc={handleViewKyc} onEditUser={handleNavigateToEditUser} notifications={notifications.filter(n=>n.userId === currentUser.id)} />;
+        return <AdminUsersScreen user={currentUser} onNavigate={navigateTo} onLogout={handleLogout} users={users} onDeactivateUser={handleDeactivateUserRequest} onBulkDeactivateUsers={handleBulkDeactivateUsersRequest} onViewKyc={handleViewKyc} onEditUser={handleNavigateToEditUser} notifications={notifications.filter(n=>n.userId === currentUser.id)} />;
       case AppView.ADMIN_ADD_EDIT_USER:
         if (!currentUser || currentUser.type !== UserType.SUPER_ADMIN) return <LoginScreen onNavigate={navigateTo} onLogin={handleLogin} onNavigateHome={() => navigateTo(AppView.HOME)} />;
         return <AdminAddEditUserScreen user={currentUser} onNavigate={navigateTo} onLogout={handleLogout} onCreateUser={handleCreateUser} notifications={notifications.filter(n=>n.userId === currentUser.id)} />;
@@ -805,27 +945,28 @@ const App: React.FC = () => {
 
   return (
     <>
+      <GlobalSpinner isLoading={isLoading} />
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <Modal 
-        isOpen={!!productToDelete} 
-        onClose={() => setProductToDelete(null)}
+        isOpen={productsToDelete.length > 0} 
+        onClose={() => setProductsToDelete([])}
         title="Confirm Deletion"
       >
-        <p>Are you sure you want to delete the product "{productToDelete?.name}"? This action cannot be undone.</p>
+        <p>Are you sure you want to delete {productsToDelete.length} product(s)? This action cannot be undone.</p>
         <div className="flex justify-end space-x-3 mt-4">
-            <button onClick={() => setProductToDelete(null)} className="px-4 py-2 bg-slate-200 text-slate-800 rounded hover:bg-slate-300">Cancel</button>
-            <button onClick={handleConfirmDeleteProduct} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
+            <button onClick={() => setProductsToDelete([])} className="px-4 py-2 bg-slate-200 text-slate-800 rounded hover:bg-slate-300">Cancel</button>
+            <button onClick={handleConfirmDeleteProducts} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
         </div>
       </Modal>
       <Modal 
-        isOpen={!!userToDeactivate} 
-        onClose={() => setUserToDeactivate(null)}
+        isOpen={usersToDeactivate.length > 0} 
+        onClose={() => setUsersToDeactivate([])}
         title="Confirm Deactivation"
       >
-        <p>Are you sure you want to deactivate the user "{userToDeactivate?.name}"? They will lose access to the platform.</p>
+        <p>Are you sure you want to deactivate {usersToDeactivate.length} user(s)? They will lose access to the platform.</p>
         <div className="flex justify-end space-x-3 mt-4">
-            <button onClick={() => setUserToDeactivate(null)} className="px-4 py-2 bg-slate-200 text-slate-800 rounded hover:bg-slate-300">Cancel</button>
-            <button onClick={handleConfirmDeactivateUser} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Deactivate</button>
+            <button onClick={() => setUsersToDeactivate([])} className="px-4 py-2 bg-slate-200 text-slate-800 rounded hover:bg-slate-300">Cancel</button>
+            <button onClick={handleConfirmDeactivateUsers} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Deactivate</button>
         </div>
       </Modal>
         <Modal 
